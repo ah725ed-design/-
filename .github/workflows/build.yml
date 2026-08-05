@@ -2,19 +2,16 @@ name: Build Android APK
 
 on:
   push:
-    branches:
-      - main
-      - master
+    branches: [ main, master ]
   workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
+      # خطوة فك ضغط كود المشروع تلقائياً
       - name: Unzip Project
         run: |
           if [ -f project.zip ]; then
@@ -24,33 +21,24 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: npm
-
-      - name: Clean Environment
-        run: |
-          rm -rf node_modules
-          rm -f package-lock.json
-          npm cache clean --force
+          node-version: 18
 
       - name: Install Dependencies
-        run: |
-          npm install --include=optional
+        run: npm install
 
       - name: Build Web Assets
         run: npm run build
 
-      - name: Setup Java
+      - name: Setup Java JDK
         uses: actions/setup-java@v4
         with:
-          distribution: zulu
-          java-version: 17
+          distribution: 'zulu'
+          java-version: '17'
 
-      - name: Sync Capacitor
-        run: |
-          npx cap sync android
+      - name: Sync Capacitor Android
+        run: npx cap sync android
 
-      - name: Build APK
+      - name: Build Debug APK
         run: |
           cd android
           chmod +x gradlew
@@ -61,3 +49,4 @@ jobs:
         with:
           name: app-debug
           path: android/app/build/outputs/apk/debug/app-debug.apk
+          
