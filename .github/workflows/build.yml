@@ -1,11 +1,9 @@
 name: Build Android APK
 
 on:
-  push:
-    branches:
-      - main
-      - master
   workflow_dispatch:
+  push:
+    branches: [ main ]
 
 jobs:
   build:
@@ -14,11 +12,6 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
-
-      - name: Extract Project
-  run: |
-    unzip -o project.zip -d extracted
-    ls -R extracted
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -33,7 +26,10 @@ jobs:
       - name: Verify Project
         run: |
           ls -la
-          test -f package.json || (echo "package.json not found" && exit 1)
+          if [ ! -f package.json ]; then
+            echo "package.json is missing"
+            exit 1
+          fi
 
       - name: Install Dependencies
         run: bun install
@@ -44,20 +40,41 @@ jobs:
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
-          distribution: temurin
-          java-version: 17
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Install Capacitor
+        run: |
+          bun add @capacitor/core @capacitor/cli @capacitor/android
+
+      - name: Initialize Capacitor (if not already initialized)
+        run: |
+          if [ ! -f capacitor.config.ts ] && [ ! -f capacitor.config.json ]; then
+            npx cap init "react-example" "com.example.reactexample" --web-dir=dist
+          fi
+
+      - name: Add Android Platform (if not already added)
+        run: |
+          if [ ! -d android ]; then
+            npx cap add android
+          fi
 
       - name: Sync Capacitor
-        run: bunx cap sync android
+        run: npx cap sync android
+
+      - name: Grant Execute Permission for gradlew
+        run: chmod +x android/gradlew
 
       - name: Build APK
-        working-directory: android
         run: |
-          chmod +x gradlew
+          cd android
           ./gradlew assembleDebug
 
-      - name: Upload APK
+      - name: List Extracted Output
+        run: ls -R android/app/build/outputs/apk
+
+      - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: app-debug
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          path: android/app/build/outputs/apk/debug/*.apk
