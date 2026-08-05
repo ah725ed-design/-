@@ -3,7 +3,7 @@ name: Build Android APK
 on:
   push:
     branches: [ main, master ]
-  workflow_dispatch: # يتيح لك تشغيل البناء يدويًا من الموبايل
+  workflow_dispatch:
 
 jobs:
   build:
@@ -11,13 +11,20 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      # خطوة فك ضغط كود المشروع تلقائياً
+      - name: Unzip Project
+        run: |
+          if [ -f project.zip ]; then
+            unzip -o project.zip -d .
+          fi
+
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 18
 
       - name: Install Dependencies
-        run: npm ci
+        run: npm install
 
       - name: Build Web Assets
         run: npm run build
@@ -42,3 +49,4 @@ jobs:
         with:
           name: app-debug
           path: android/app/build/outputs/apk/debug/app-debug.apk
+          
