@@ -15,7 +15,7 @@ jobs:
 
       - name: Extract Project ZIP
         run: |
-          unzip -o "Ø¬Ø±Ø¯-Ø§Ù„Ø²ÙŠÙˆØª-ÙˆØ§Ù„Ù…Ø®Ø§Ø²Ù† (2).zip" -d extracted
+          unzip -o "جرد-الزيوت-والمخازن (2).zip" -d extracted
           ls -la extracted
 
       - name: Setup Node.js
@@ -82,6 +82,15 @@ jobs:
         working-directory: extracted/android
         run: ./gradlew assembleDebug
 
+      - name: List Extracted Output
+        run: ls -R extracted/android/app/build/outputs/apk
+
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-debug
+          path: extracted/android/app/build/outputs/apk/debug/*.apk
+          
       - name: List Extracted Output
         run: ls -R extracted/android/app/build/outputs/apk
 
