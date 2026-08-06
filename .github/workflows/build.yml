@@ -13,6 +13,11 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
+      - name: Extract Project ZIP
+        run: |
+          unzip -o "Ø¬Ø±Ø¯-Ø§Ù„Ø²ÙŠÙˆØª-ÙˆØ§Ù„Ù…Ø®Ø§Ø²Ù† (2).zip" -d extracted
+          ls -la extracted
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -24,6 +29,7 @@ jobs:
           bun-version: latest
 
       - name: Verify Project
+        working-directory: extracted
         run: |
           ls -la
           if [ ! -f package.json ]; then
@@ -32,9 +38,11 @@ jobs:
           fi
 
       - name: Install Dependencies
+        working-directory: extracted
         run: bun install
 
       - name: Build Web Assets
+        working-directory: extracted
         run: bun run build
 
       - name: Setup Java
@@ -44,37 +52,41 @@ jobs:
           java-version: '17'
 
       - name: Install Capacitor
+        working-directory: extracted
         run: |
           bun add @capacitor/core @capacitor/cli @capacitor/android
 
       - name: Initialize Capacitor (if not already initialized)
+        working-directory: extracted
         run: |
           if [ ! -f capacitor.config.ts ] && [ ! -f capacitor.config.json ]; then
             npx cap init "react-example" "com.example.reactexample" --web-dir=dist
           fi
 
       - name: Add Android Platform (if not already added)
+        working-directory: extracted
         run: |
           if [ ! -d android ]; then
             npx cap add android
           fi
 
       - name: Sync Capacitor
+        working-directory: extracted
         run: npx cap sync android
 
       - name: Grant Execute Permission for gradlew
+        working-directory: extracted
         run: chmod +x android/gradlew
 
       - name: Build APK
-        run: |
-          cd android
-          ./gradlew assembleDebug
+        working-directory: extracted/android
+        run: ./gradlew assembleDebug
 
       - name: List Extracted Output
-        run: ls -R android/app/build/outputs/apk
+        run: ls -R extracted/android/app/build/outputs/apk
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: app-debug
-          path: android/app/build/outputs/apk/debug/*.apk
+          path: extracted/android/app/build/outputs/apk/debug/*.apk
