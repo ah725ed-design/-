@@ -41,6 +41,13 @@ jobs:
         working-directory: extracted
         run: bun install
 
+      - name: Ensure Capacitor Filesystem Plugin
+        working-directory: extracted
+        run: |
+          if ! grep -q '"@capacitor/filesystem"' package.json; then
+            bun add @capacitor/filesystem
+          fi
+
       - name: Build Web Assets
         working-directory: extracted
         run: bun run build
@@ -50,25 +57,6 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '17'
-
-      - name: Install Capacitor
-        working-directory: extracted
-        run: |
-          bun add @capacitor/core @capacitor/cli @capacitor/android
-
-      - name: Initialize Capacitor (if not already initialized)
-        working-directory: extracted
-        run: |
-          if [ ! -f capacitor.config.ts ] && [ ! -f capacitor.config.json ]; then
-            npx cap init "react-example" "com.example.reactexample" --web-dir=dist
-          fi
-
-      - name: Add Android Platform (if not already added)
-        working-directory: extracted
-        run: |
-          if [ ! -d android ]; then
-            npx cap add android
-          fi
 
       - name: Sync Capacitor
         working-directory: extracted
@@ -91,11 +79,3 @@ jobs:
           name: app-debug
           path: extracted/android/app/build/outputs/apk/debug/*.apk
           
-      - name: List Extracted Output
-        run: ls -R extracted/android/app/build/outputs/apk
-
-      - name: Upload APK Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: app-debug
-          path: extracted/android/app/build/outputs/apk/debug/*.apk
